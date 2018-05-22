@@ -71,4 +71,4 @@ if __name__ == "__main__":
 
     # Run bot
     run_bot(args.token)
-    init_model()
+    # init_model()
