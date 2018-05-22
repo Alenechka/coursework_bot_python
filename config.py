@@ -8,3 +8,7 @@ RESOURCES_DIR = os.path.join(PROJECT_DIR, "resources")
 PROXY_URL = "socks5://185.246.153.31:443/"
 PROXY_USER = "guest"
 PROXY_PASS = "rnk_go_away"
+
+# Word2Vec settings
+MODEL_NAME = "word2vec-ruscorpora-300"
+TOPICS_FILE = os.path.join(RESOURCES_DIR, 'topics.txt')
