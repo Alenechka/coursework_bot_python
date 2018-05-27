@@ -2,6 +2,10 @@ import argparse
 import logging
 import gensim
 import gensim.downloader
+import requests
+from future import standard_library
+from pymystem3 import Mystem
+
 import config
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -9,6 +13,8 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import utils
 
 model = None
+tags_model = None
+tag_mapping = None
 topics = []
 
 # Enable logging
@@ -32,18 +38,20 @@ def identify_topic(bot, update):
     logging.info("Identify message topic ...")
 
     msg = str(update.message.text)
-    words_from_message = utils.remove_outofmodel_words(model, utils.remove_excess_symbols(msg).split(" "))
+    words_from_message = utils.remove_outofmodel_words(model, msg,
+                                                       tags_model, tag_mapping)
     logging.info("Words in model from message: %s." % words_from_message)
     logging.info("Try to identify topic ...")
     topic_for_message = ["", 0.0]
 
     for topic in topics:
-        score = model.n_similarity(words_from_message, [utils.add_tag_to_word(topic)])
+        if topic in model:
+            score = model.n_similarity(words_from_message, [topic])
 
-        logging.info("Score for topic '{0}' is {1}.".format(topic, str(score)))
+            logging.info("Score for topic '{0}' is {1}.".format(topic, str(score)))
 
-        if score > topic_for_message[1]:
-            topic_for_message = [topic, score]
+            if score > topic_for_message[1]:
+                topic_for_message = [utils.remove_tag(topic), score]
 
     logging.info("Identified topic is '%s'. " % topic_for_message[0])
 
@@ -83,6 +91,25 @@ def init_model():
     global topics
     topics = utils.load_topics()
     logging.info("Topics: %s." % topics)
+
+    global tags_model
+    standard_library.install_aliases()
+
+    # Таблица преобразования частеречных тэгов Mystem в тэги UPoS:
+    mapping_url = 'https://raw.githubusercontent.com/akutuzov/universal-pos-tags/4653e8a9154e93fe2f417c7fdb7a357b7d6ce333/ru-rnc.map'
+
+    global tag_mapping
+    mystem2upos = {}
+    r = requests.get(mapping_url, stream=True)
+    for pair in r.text.split('\n'):
+        pair = pair.split()
+        if len(pair) > 1:
+            mystem2upos[pair[0]] = pair[1]
+
+    tag_mapping = mystem2upos
+
+    logging.info('Loading the tags model ...')
+    tags_model = Mystem()
 
 
 if __name__ == "__main__":
