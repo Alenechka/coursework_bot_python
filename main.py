@@ -37,25 +37,35 @@ def error(bot, update, error):
 def identify_topic(bot, update):
     logging.info("Identify message topic ...")
 
-    msg = str(update.message.text)
-    words_from_message = utils.remove_outofmodel_words(model, msg,
-                                                       tags_model, tag_mapping)
-    logging.info("Words in model from message: %s." % words_from_message)
-    logging.info("Try to identify topic ...")
-    topic_for_message = ["", 0.0]
+    if "505903005" == str(update.message.from_user.id).strip() or \
+            "363314646" == str(update.message.from_user.id).strip():
+        msg = str(update.message.text)
+        words_from_message = utils.remove_outofmodel_words(model, msg,
+                                                           tags_model, tag_mapping)
 
-    for topic in topics:
-        if topic in model:
-            score = model.n_similarity(words_from_message, [topic])
+        if words_from_message and len(words_from_message) > 0:
+            logging.info("Words in model from message: %s." % words_from_message)
+            logging.info("Try to identify topic ...")
+            topic_for_message = ["", 0.0]
+            topics_scores = {}
 
-            logging.info("Score for topic '{0}' is {1}.".format(topic, str(score)))
+            for topic in topics:
+                if topic in model:
+                    score = model.n_similarity(words_from_message, [topic])
 
-            if score > topic_for_message[1]:
-                topic_for_message = [utils.remove_tag(topic), score]
+                    logging.info("Score for topic '{0}' is {1}.".format(topic, str(score)))
 
-    logging.info("Identified topic is '%s'. " % topic_for_message[0])
+                    topics_scores[topic] = score
 
-    update.message.reply_text("Тема: '%s'." % topic_for_message[0], quote=True)
+                    if score > topic_for_message[1]:
+                        topic_for_message = [utils.remove_tag(topic), score]
+
+            logging.info("Identified topic is '%s'. " % topic_for_message[0])
+
+            # update.message.reply_text("Рассчет косинусной меры для всех тем: '%s'." % topics_scores, quote=True)
+            update.message.reply_text("Тема сообщения: '%s'." % topic_for_message[0], quote=True)
+        else:
+            update.message.reply_text("Не удалось определить тему сообщения.", quote=True)
 
 
 def run_bot(token):
@@ -74,7 +84,7 @@ def run_bot(token):
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(MessageHandler(Filters.text, identify_topic))
 
-    updater.start_polling()
+    updater.start_polling(clean=True)
 
     logging.info("Polling started.")
 

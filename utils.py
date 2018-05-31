@@ -33,48 +33,6 @@ def add_tag_boosted(text, model, mapping=None):
     return tagged
 
 
-def add_tag_to_word(word):
-    m = Mystem()
-    processed = m.analyze(word)[0]
-    lemma = processed["analysis"][0]["lex"].lower().strip()
-    pos = processed["analysis"][0]["gr"].split(',')[0]
-    pos = pos.split('=')[0].strip()
-    tagged = lemma + '_' + transform_tag(pos)
-
-    return tagged
-
-
-def transform_tag(tag):
-    if tag == "S":
-        return "NOUN"
-    elif tag == "COM" or tag == "A" or tag == "ANUM":
-        return "ADJ"
-    elif tag == "ADV" or tag == "ADVPRO":
-        return "ADV"
-    elif tag == "APRO":
-        return "DET"
-    elif tag == "CONJ":
-        return "SCONJ"
-    elif tag == "INTJ":
-        return "INTJ"
-    elif tag == "NONLEX":
-        return "X"
-    elif tag == "NUM":
-        return "NUM"
-    elif tag == "PART":
-        return "PART"
-    elif tag == "PR":
-        return "ADP"
-    elif tag == "SPRO":
-        return "PRON"
-    elif tag == "UNKN":
-        return "X"
-    elif tag == "V":
-        return "VERB"
-    else:
-        return tag
-
-
 def remove_tag(tagged_word):
     return str(tagged_word).split("_")[0]
 
